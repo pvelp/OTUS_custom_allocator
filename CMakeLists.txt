@@ -8,7 +8,10 @@ project(CUSTOM_ALLOCATOR VERSION ${PROJECT_VERSION})
 configure_file(version.h.in version.h)
 
 add_executable(main main.cpp)
-add_library(lib lib.cpp)
+add_library(lib lib.cpp
+        profile.hpp
+        custom_container.hpp
+)
 target_link_libraries(main lib)
 
 # add_subdirectory(googletest)

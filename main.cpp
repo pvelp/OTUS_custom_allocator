@@ -1,19 +1,37 @@
-#include <iostream>
 #include <map>
 #include "lib.hpp"
-
+#include "custom_container.hpp"
+#include "profile.hpp"
 
 int main() {
-    std::vector<char, custom_allocator<char, 40>> v;
-    std::cout << "--stage1: capacity: " << v.capacity() << std::endl << std::endl;
-    for (char i = 0; i < 5; i++) {
-        v.push_back(i);
-        std::cout << "--insert: " << +i << ", capacity: " << v.capacity() << std::endl;
+    {
+        LOG_DURATION("Map with default std::allocator")
+        std::map<int, int> m1;
+        for (int i = 0; i < 10; ++i)
+            m1[i] = factorial(i);
+
+        for (auto const& pair : m1){
+            std::cout << pair.first << " " << pair.second << std::endl;
+        }
     }
-    std::cout << "--size: " << v.size() << " capacity: " << v.capacity() << std::endl;
-    for (const auto &a: v) {
-        std::cout << +a << std::endl;
+
+    {
+        LOG_DURATION("Map with custom allocator")
+        std::map<int, int, std::less<>, custom_allocator<std::pair<const int, int>, 10>> m2;
+        std::cout<< m2.size() << std::endl;
+        for (int i = 0; i < 10; ++i)
+            m2[i] = factorial(i);
+
+        for (auto const& pair : m2){
+            std::cout << pair.first << " " << pair.second << std::endl;
+        }
     }
+
+
+//    custom_vector<int, std::allocator<int>> v;
+//    for (int i = 0; i < 10; i++){
+//        v.push_back(i);
+//    }
 
     return 0;
 }

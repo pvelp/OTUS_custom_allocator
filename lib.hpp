@@ -1,77 +1,72 @@
+#pragma once
+
 #include <iostream>
 
-
-template <typename T, size_t N>
-class custom_allocator
-{
+template<typename T, size_t ALLOC_SIZE>
+class custom_allocator {
 public:
     using value_type = T;
-    custom_allocator() noexcept;
-    template <typename U, size_t S> custom_allocator(const custom_allocator<U, S>&) noexcept;
-    T* allocate(size_t n);
-    void deallocate(T* p, size_t n);
 
-    template< typename U, size_t S = N>
-    struct rebind
-    {
-        typedef custom_allocator<U, S> other;
+    custom_allocator() noexcept: pool_begin(static_cast<char *>(::operator new(ALLOC_SIZE * sizeof(T)))) {
+        pool_end = pool_begin + ALLOC_SIZE * sizeof(T);
+        pool_tail = pool_begin;
+    }
+
+
+    ~custom_allocator() { delete pool_begin; };
+
+
+    template<typename U, size_t S>
+    custom_allocator(const custom_allocator<U, S> &a) noexcept {
+        pool_begin = a.pool_begin;
+        pool_tail = a.pool_tail;
+        pool_end = a.pool_end;
+    }
+
+    T *allocate(size_t n) {
+        //        if (n != 1) throw std::logic_error("Can't allocate arrays");
+//        std::cout << "count of elements = " << n << std::endl;
+//        std::cout << "one element size = " << sizeof(T) << std::endl;
+        if (pool_tail + n * sizeof(T) > pool_end) throw std::bad_alloc();
+        auto result = reinterpret_cast<T *>(pool_tail);
+        pool_tail += n * sizeof(T);
+//        std::cout << "begin: " <<  (void*)pool_begin << " end: " << (void*)pool_end <<
+//                  " current tail: " << (void*)pool_tail << " add: " << n * sizeof(T)<<
+//                  " total added: " << pool_tail - pool_begin << std::endl;
+        return result;
+    }
+
+
+    void deallocate(T *p, size_t n) {
+
+    }
+
+
+    template<typename U>
+    struct rebind {
+        using other = custom_allocator<U, ALLOC_SIZE>;
     };
 
     using propagate_on_container_copy_assignment = std::true_type;
     using propagate_on_container_move_assignment = std::true_type;
     using propagate_on_container_swap = std::true_type;
 private:
-    static constexpr size_t pool_size{N};
-    size_t cur_pos;
-    size_t elem_count;
-    T* pool{nullptr};
+    char *pool_begin;
+    char *pool_end;
+    char *pool_tail;
 };
 
-template<typename T, size_t N>
-inline custom_allocator<T, N>::custom_allocator() noexcept : cur_pos(0), elem_count(0){
-    pool = static_cast<T*>(::operator new(pool_size * sizeof (T)));
-}
 
-
-template<typename T, size_t N>
-template<typename U, size_t S>
-custom_allocator<T, N>::custom_allocator(const custom_allocator<U, S> &a) noexcept {
-    pool = a.pool;
-}
-
-
-template<typename T, size_t N>
-T* custom_allocator<T, N>::allocate(size_t n) {
-    if (cur_pos + n > pool_size){
-        throw std::bad_alloc();
-    }
-    cur_pos = n;
-    T* tmp = pool + cur_pos;
-    std::cout << "!custom_allocator::allocate, allocated additional " << n * sizeof(T) << " bytes, there are "
-    << (pool_size - cur_pos) * sizeof (T)<< " bytes left, total allocated: " << cur_pos * sizeof(T) << std::endl;
-    return tmp;
-}
-
-
-template<typename T, size_t N>
-void custom_allocator<T, N>::deallocate(T *p, size_t n) {
-    std::cout << "custom_allocator::deallocate, " << "diff = " << p - pool << " n = " << n << std::endl << std::endl;
-    if (!p) return;
-    cur_pos -= n;
-    if (cur_pos != 0) return;
-    free(p);
-    std::cout << "deallocated all mem" << std::endl;
-}
-
-
-template <typename T, size_t N, typename U, size_t S>
-constexpr bool operator==(const custom_allocator<T, N>& a1, const custom_allocator<U, S>& a2)
-{
+template<typename T, size_t ALLOC_SIZE, typename U, size_t S>
+constexpr bool operator==(const custom_allocator<T, ALLOC_SIZE> &a1, const custom_allocator<U, S> &a2) {
     return a1.pool == a2.pool;
 }
 
 
-template <typename T, size_t N, typename U, size_t S>
-constexpr bool operator!=(const custom_allocator<T, N>& a1, const custom_allocator<U, S>& a2){
+template<typename T, size_t ALLOC_SIZE, typename U, size_t S>
+constexpr bool operator!=(const custom_allocator<T, ALLOC_SIZE> &a1, const custom_allocator<U, S> &a2) {
     return a1.pool != a2.pool;
 }
+
+
+int factorial(const int &value);
