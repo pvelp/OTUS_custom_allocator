@@ -18,7 +18,6 @@ int main() {
     {
         LOG_DURATION("Map with custom allocator")
         std::map<int, int, std::less<>, custom_allocator<std::pair<const int, int>, 10>> m2;
-        std::cout<< m2.size() << std::endl;
         for (int i = 0; i < 10; ++i)
             m2[i] = factorial(i);
 
@@ -28,10 +27,36 @@ int main() {
     }
 
 
-//    custom_vector<int, std::allocator<int>> v;
-//    for (int i = 0; i < 10; i++){
-//        v.push_back(i);
-//    }
+    {
+        LOG_DURATION("custom_vector with default allocator")
+        custom_vector<int, std::allocator<int>> v;
+        std::cout << "START: size = " << v.size() << " capacity = " << v.capacity() << std::endl;
 
+        for (int i = 0; i < 10; i++) {
+            v.push_back(i);
+            std::cout << "size = " << v.size() << " capacity = " << v.capacity() << std::endl;
+        }
+
+        for (auto const &elem: v) {
+            std::cout << elem << " ";
+        }
+        std::cout << std::endl;
+    }
+
+
+    {
+        LOG_DURATION("custom_vector with custom_allocator")
+        custom_vector<int, custom_allocator<int, 100>> v;
+
+        for (int i = 0; i < 10; i++) {
+            v.push_back(i);
+            std::cout << "size = " << v.size() << " capacity = " << v.capacity() << std::endl;
+        }
+
+        for (auto const &elem: v) {
+            std::cout << elem << " ";
+        }
+        std::cout << std::endl;
+    }
     return 0;
 }

@@ -10,6 +10,7 @@ public:
     custom_allocator() noexcept: pool_begin(static_cast<char *>(::operator new(ALLOC_SIZE * sizeof(T)))) {
         pool_end = pool_begin + ALLOC_SIZE * sizeof(T);
         pool_tail = pool_begin;
+        pool_size = ALLOC_SIZE;
     }
 
 
@@ -25,9 +26,22 @@ public:
 
     T *allocate(size_t n) {
         //        if (n != 1) throw std::logic_error("Can't allocate arrays");
-//        std::cout << "count of elements = " << n << std::endl;
-//        std::cout << "one element size = " << sizeof(T) << std::endl;
         if (pool_tail + n * sizeof(T) > pool_end) throw std::bad_alloc();
+//        if (pool_tail + n * sizeof(T) > pool_end){
+//            size_t cur_pos = (pool_tail - pool_begin)/sizeof(T);
+//            char* tmp = static_cast<char*>(::operator new((size_t)(ALLOC_SIZE*1.5)*sizeof(T)));
+//
+//            for (size_t i = 0; i < pool_size; i++){
+//                tmp[i] = pool_begin[i];
+//            }
+//
+//            pool_size = (size_t)(pool_size*1.5);
+//            delete pool_begin;
+//            pool_begin = tmp;
+//            pool_end = pool_begin + pool_size*sizeof(T);
+//            pool_tail = pool_begin + cur_pos + n;
+//            return reinterpret_cast<T *>(pool_tail);
+//        }
         auto result = reinterpret_cast<T *>(pool_tail);
         pool_tail += n * sizeof(T);
 //        std::cout << "begin: " <<  (void*)pool_begin << " end: " << (void*)pool_end <<
@@ -54,6 +68,7 @@ private:
     char *pool_begin;
     char *pool_end;
     char *pool_tail;
+    size_t pool_size;
 };
 
 
